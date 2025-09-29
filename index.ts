@@ -1,8 +1,11 @@
-const server = Bun.serve({
-  port: 3000,
-  fetch(request) {
-    return new Response("Hello, World!");
-  },
+import { Client, Events, GatewayIntentBits } from 'discord.js';
+
+const discordToken = Bun.env.DISCORD_TOKEN;
+
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+client.once(Events.ClientReady, readyClient => {
+  console.log(`Ready! Logged in as ${readyClient.user.tag}`);
 });
 
-console.log(`Server running at http://localhost:${server.port}/`);
+client.login(discordToken);
