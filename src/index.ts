@@ -7,6 +7,7 @@ import {
   PermissionFlagsBits,
 } from 'discord.js';
 import { registerCommands } from './register-commands';
+import { wait } from './utils';
 
 const client = new Client({
   intents: ['Guilds', 'GuildMembers', 'GuildMessages', 'MessageContent'],
@@ -81,7 +82,8 @@ client.on(Events.InteractionCreate, async interaction => {
 
     const member = interaction.options.getMember('user') as GuildMember;
 
-    if (!member.voice.channel) {
+    const originalChannel = member.voice.channel;
+    if (!originalChannel) {
       return interaction.reply({
         content: `O usuário ${member.user.username} não está em um canal de voz.`,
         flags: 'Ephemeral',
@@ -91,7 +93,7 @@ client.on(Events.InteractionCreate, async interaction => {
     const destinationChannels = interaction.guild?.channels.cache.filter(
       channel =>
         channel.type === ChannelType.GuildVoice &&
-        channel.id !== member.voice.channel?.id,
+        channel.id !== originalChannel.id,
     );
 
     if (destinationChannels.size === 0) {
@@ -113,10 +115,14 @@ client.on(Events.InteractionCreate, async interaction => {
     try {
       await member.voice.setChannel(randomChannel);
       await interaction.reply(`${member.user.username} foi dar uma volta...`);
+
+      await wait(5000);
+
+      await member.voice.setChannel(originalChannel);
     } catch (error) {
       console.error('Erro ao tentar mover o membro aleatoriamente:', error);
 
-      await interaction.reply({
+      return interaction.reply({
         content: 'Ocorreu um erro ao tentar mover este membro.',
         flags: 'Ephemeral',
       });
