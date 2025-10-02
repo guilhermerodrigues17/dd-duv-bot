@@ -1,4 +1,11 @@
-import { Client, EmbedBuilder, Events, GuildMember } from 'discord.js';
+import {
+  ChannelType,
+  Client,
+  EmbedBuilder,
+  Events,
+  GuildMember,
+  PermissionFlagsBits,
+} from 'discord.js';
 import { registerCommands } from './register-commands';
 
 const client = new Client({
@@ -54,7 +61,64 @@ client.on(Events.InteractionCreate, async interaction => {
       console.error('Erro ao executar o comando userinfo:', error);
       await interaction.reply({
         content: 'Ocorreu um erro ao buscar as informações.',
-        ephemeral: true,
+        flags: 'Ephemeral',
+      });
+    }
+  }
+
+  if (interaction.commandName === 'dar-uma-volta') {
+    if (
+      !interaction.guild?.members.me?.permissions.has(
+        PermissionFlagsBits.MoveMembers,
+      )
+    ) {
+      return interaction.reply({
+        content:
+          'Eu não tenho a permissão de "Mover Membros" para executar este comando.',
+        flags: 'Ephemeral',
+      });
+    }
+
+    const member = interaction.options.getMember('user') as GuildMember;
+
+    if (!member.voice.channel) {
+      return interaction.reply({
+        content: `O usuário ${member.user.username} não está em um canal de voz.`,
+        flags: 'Ephemeral',
+      });
+    }
+
+    const destinationChannels = interaction.guild?.channels.cache.filter(
+      channel =>
+        channel.type === ChannelType.GuildVoice &&
+        channel.id !== member.voice.channel?.id,
+    );
+
+    if (destinationChannels.size === 0) {
+      return interaction.reply({
+        content:
+          'Não há outros canais de voz disponíveis no servidor para mover este usuário.',
+        flags: 'Ephemeral',
+      });
+    }
+
+    const randomChannel = destinationChannels.random();
+    if (!randomChannel || randomChannel.type !== ChannelType.GuildVoice) {
+      return interaction.reply({
+        content: 'Não foi possível selecionar um canal aleatório',
+        flags: 'Ephemeral',
+      });
+    }
+
+    try {
+      await member.voice.setChannel(randomChannel);
+      await interaction.reply(`${member.user.username} foi dar uma volta...`);
+    } catch (error) {
+      console.error('Erro ao tentar mover o membro aleatoriamente:', error);
+
+      await interaction.reply({
+        content: 'Ocorreu um erro ao tentar mover este membro.',
+        flags: 'Ephemeral',
       });
     }
   }

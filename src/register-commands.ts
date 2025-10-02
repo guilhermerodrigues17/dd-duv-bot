@@ -1,4 +1,4 @@
-import { REST, Routes, SlashCommandBuilder } from 'discord.js';
+import { ChannelType, REST, Routes, SlashCommandBuilder } from 'discord.js';
 
 const token = process.env.BOT_TOKEN;
 const appId = process.env.APP_ID;
@@ -16,6 +16,15 @@ const commands = [
       option
         .setName('membro')
         .setDescription('O membro que você deseja consultar')
+        .setRequired(true),
+    ),
+  new SlashCommandBuilder()
+    .setName('dar-uma-volta')
+    .setDescription('Manda o usuário ir dar uma volta')
+    .addUserOption(option =>
+      option
+        .setName('user')
+        .setDescription('Usuário que você vai fazer dar uma volta')
         .setRequired(true),
     ),
 ].map(command => command.toJSON());
